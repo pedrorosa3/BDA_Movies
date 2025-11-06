@@ -1,10 +1,8 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 import pandas as pd
 
-
-# CONEXÃO AO MONGODB ATLAS
-ATLAS_URI = "mongodb+srv://guiti03_db_user:<password>@cluster0.ezv71oa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-
+# ---- CONEXÃO AO MONGODB ATLAS ----
+ATLAS_URI = "mongodb+srv://diogosfb91_db_user:<password>@cluster0.hszfcsx.mongodb.net/?appName=Cluster0"
 client = MongoClient(ATLAS_URI)
 db = client["bda_Group11"]
 print("Ligação ao MongoDB Atlas estabelecida com sucesso\n")
@@ -17,10 +15,20 @@ def safe_int(value):
         return None
 
 
+# ---- USERS ----
 print("A carregar users.csv ...")
+users = pd.read_csv(
+    "users.csv",
+    sep=";",
+    encoding="ISO-8859-1",
+    on_bad_lines="skip",
+    low_memory=False,
+    nrows=20000
+)
 
-users = pd.read_csv("users.csv", sep=";", encoding="ISO-8859-1", on_bad_lines="skip", low_memory=False)
-print(f"→ {len(users):,} utilizadores encontrados.")
+# Remover duplicados de ID
+users = users.drop_duplicates(subset=["User-ID"], keep="first")
+print(f"→ {len(users):,} utilizadores únicos (limitado a 20.000).")
 
 users_docs = []
 for _, row in users.iterrows():
@@ -36,10 +44,17 @@ if users_docs:
     print("Users inseridos com sucesso!\n")
 
 
+# ---- BOOKS ----
 print("A carregar books.csv ...")
-
-books = pd.read_csv("books.csv", sep=";", encoding="ISO-8859-1", on_bad_lines="skip", low_memory=False)
-print(f"→ {len(books):,} livros encontrados.")
+books = pd.read_csv(
+    "books.csv",
+    sep=";",
+    encoding="ISO-8859-1",
+    on_bad_lines="skip",
+    low_memory=False,
+    nrows=20000
+)
+print(f"→ {len(books):,} livros (limitado a 20.000).")
 
 books_docs = []
 for _, row in books.iterrows():
@@ -52,11 +67,11 @@ for _, row in books.iterrows():
         "image_url_s": str(row["Image-URL-S"]) if pd.notna(row["Image-URL-S"]) else None,
         "image_url_m": str(row["Image-URL-M"]) if pd.notna(row["Image-URL-M"]) else None,
         "image_url_l": str(row["Image-URL-L"]) if pd.notna(row["Image-URL-L"]) else None,
+        "ratings": []  # Campo inicial vazio
     }
     books_docs.append(doc)
 
 if books_docs:
-    # Inserir em blocos (para evitar excesso de dados)
     batch_size = 5000
     for i in range(0, len(books_docs), batch_size):
         batch = books_docs[i:i + batch_size]
@@ -65,33 +80,50 @@ if books_docs:
     print("Books inseridos com sucesso!\n")
 
 
+# ---- RATINGS (embutidos nos livros, com bulk_write) ----
 print("A carregar ratings.csv ...")
+ratings = pd.read_csv(
+    "ratings.csv",
+    sep=";",
+    encoding="ISO-8859-1",
+    on_bad_lines="skip",
+    low_memory=False,
+    nrows=20000
+)
+print(f"→ {len(ratings):,} avaliações (limitado a 20.000).")
 
-ratings = pd.read_csv("ratings.csv", sep=";", encoding="ISO-8859-1", on_bad_lines="skip", low_memory=False)
-print(f"→ {len(ratings):,} avaliações encontradas.")
+batch_size = 500
+ops = []
+count = 0
 
-ratings_docs = []
 for _, row in ratings.iterrows():
-    doc = {
-        "user_id": int(row["User-ID"]),
-        "ISBN": str(row["ISBN"]),
-        "book_rating": safe_int(row["Book-Rating"])
-    }
-    ratings_docs.append(doc)
+    user_id = safe_int(row["User-ID"])
+    isbn = str(row["ISBN"])
+    rating = safe_int(row["Book-Rating"])
 
-if ratings_docs:
-    batch_size = 10000
-    for i in range(0, len(ratings_docs), batch_size):
-        batch = ratings_docs[i:i + batch_size]
-        db.ratings.insert_many(batch)
-        print(f"   → {i + len(batch):,}/{len(ratings_docs):,} avaliações inseridas...")
-    print("Ratings inseridos com sucesso!\n")
+    if user_id is not None and isbn:
+        ops.append(UpdateOne(
+            {"ISBN": isbn},
+            {"$push": {"ratings": {"user_id": user_id, "book_rating": rating}}}
+        ))
 
+        if len(ops) >= batch_size:
+            db.books.bulk_write(ops)
+            count += len(ops)
+            print(f"   → {count:,}/{len(ratings):,} ratings processados...")
+            ops = []
 
+# Inserir o resto
+if ops:
+    db.books.bulk_write(ops)
+    count += len(ops)
+
+print(f"Total de ratings embutidos: {count:,}\n")
+
+# ---- RESUMO ----
 print("Resumo final:")
 print(f" Users: {db.users.count_documents({}):,}")
 print(f" Books: {db.books.count_documents({}):,}")
-print(f" Ratings: {db.ratings.count_documents({}):,}")
 
 client.close()
-print("\n Importação concluída com sucesso no MongoDB Atlas!")
+print("\nImportação concluída com sucesso no MongoDB Atlas!")
