@@ -2,7 +2,7 @@
 BDA_Group11
 
 
-# Os ratings devem de estar na coleção livros, não numa coleção à parte - Versão do Mongo
+Os ratings devem de estar na coleção livros, não numa coleção à parte - Versão do Mongo
 
 
 ## GOAL 2 
@@ -21,7 +21,8 @@ Queries que foram feitas em SQL :
 
 - 6 -  Top livros por faixa etária - Deslimitar para ver mais faixas etárias, senao aparece só a primeira.
 
-- Explicar 7
+- 7 - Utilizadores com gostos semelhantes (simples)
+     Encontra pares de utilizadores que deram ratings idênticos ao mesmo livro.
 
 - 8 - Sugere livros que um utilizador ainda não leu, mas que são   bem avaliados por utilizadores semelhantes.
 Exemplo está com utilizador 277427.
