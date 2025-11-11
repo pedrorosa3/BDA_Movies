@@ -1,11 +1,27 @@
 from pymongo import MongoClient, UpdateOne
 import pandas as pd
 
-# ---- CONEXÃO AO MONGODB ATLAS ----
-ATLAS_URI = "mongodb+srv://diogosfb91_db_user:<password>@cluster0.hszfcsx.mongodb.net/?appName=Cluster0"
-client = MongoClient(ATLAS_URI)
-db = client["bda_Group11"]
-print("Ligação ao MongoDB Atlas estabelecida com sucesso\n")
+# ---- CONFIGURAÇÕES ----
+USE_LOCAL_DB = True      # True → usar Mongo local; False → usar Atlas
+LIMITED = False          # True → limitar a 20.000 linhas; False → importar tudo
+
+# ---- CONEXÃO AO MONGODB ----
+if USE_LOCAL_DB:
+    MONGO_USER = "root"
+    MONGO_PASS = "<password>"
+    MONGO_HOST = "localhost"
+    MONGO_PORT = "27017"
+    DB_NAME = "bda_Group11"
+
+    LOCAL_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/"
+    client = MongoClient(LOCAL_URI)
+    db = client[DB_NAME]
+    print("Ligação ao MongoDB local estabelecida com sucesso\n")
+else:
+    ATLAS_URI = "mongodb+srv://diogosfb91_db_user:<password>@cluster0.hszfcsx.mongodb.net/?appName=Cluster0"
+    client = MongoClient(ATLAS_URI)
+    db = client["bda_Group11"]
+    print("Ligação ao MongoDB Atlas estabelecida com sucesso\n")
 
 
 def safe_int(value):
@@ -17,18 +33,23 @@ def safe_int(value):
 
 # ---- USERS ----
 print("A carregar users.csv ...")
+nrows = 20000 if LIMITED else None
+
 users = pd.read_csv(
     "users.csv",
     sep=";",
     encoding="ISO-8859-1",
     on_bad_lines="skip",
     low_memory=False,
-    nrows=20000
+    nrows=nrows
 )
 
 # Remover duplicados de ID
 users = users.drop_duplicates(subset=["User-ID"], keep="first")
-print(f"→ {len(users):,} utilizadores únicos (limitado a 20.000).")
+if LIMITED:
+    print(f"→ {len(users):,} utilizadores únicos (limitado a 20.000).")
+else:
+    print(f"→ {len(users):,} utilizadores únicos (sem limite).")
 
 users_docs = []
 for _, row in users.iterrows():
@@ -40,7 +61,14 @@ for _, row in users.iterrows():
     users_docs.append(doc)
 
 if users_docs:
-    db.users.insert_many(users_docs)
+    batch_size = 5000
+    for i in range(0, len(users_docs), batch_size):
+        batch = users_docs[i:i + batch_size]
+        try:
+            db.users.insert_many(batch, ordered=False)
+            print(f"   → {i + len(batch):,}/{len(users_docs):,} utilizadores inseridos...")
+        except Exception as e:
+            print(f"⚠️ Erro no batch {i // batch_size + 1}: {e}")
     print("Users inseridos com sucesso!\n")
 
 
@@ -52,9 +80,12 @@ books = pd.read_csv(
     encoding="ISO-8859-1",
     on_bad_lines="skip",
     low_memory=False,
-    nrows=20000
+    nrows=nrows
 )
-print(f"→ {len(books):,} livros (limitado a 20.000).")
+if LIMITED:
+    print(f"→ {len(books):,} livros (limitado a 20.000).")
+else:
+    print(f"→ {len(books):,} livros (sem limite).")
 
 books_docs = []
 for _, row in books.iterrows():
@@ -75,8 +106,11 @@ if books_docs:
     batch_size = 5000
     for i in range(0, len(books_docs), batch_size):
         batch = books_docs[i:i + batch_size]
-        db.books.insert_many(batch)
-        print(f"   → {i + len(batch):,}/{len(books_docs):,} livros inseridos...")
+        try:
+            db.books.insert_many(batch, ordered=False)
+            print(f"   → {i + len(batch):,}/{len(books_docs):,} livros inseridos...")
+        except Exception as e:
+            print(f"⚠️ Erro no batch {i // batch_size + 1}: {e}")
     print("Books inseridos com sucesso!\n")
 
 
@@ -88,9 +122,12 @@ ratings = pd.read_csv(
     encoding="ISO-8859-1",
     on_bad_lines="skip",
     low_memory=False,
-    nrows=20000
+    nrows=nrows
 )
-print(f"→ {len(ratings):,} avaliações (limitado a 20.000).")
+if LIMITED:
+    print(f"→ {len(ratings):,} avaliações (limitado a 20.000).")
+else:
+    print(f"→ {len(ratings):,} avaliações (sem limite).")
 
 batch_size = 500
 ops = []
@@ -126,4 +163,4 @@ print(f" Users: {db.users.count_documents({}):,}")
 print(f" Books: {db.books.count_documents({}):,}")
 
 client.close()
-print("\nImportação concluída com sucesso no MongoDB Atlas!")
+print("\nImportação concluída com sucesso!")
