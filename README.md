@@ -26,8 +26,8 @@ Queries que foram feitas em SQL :
 - 8 - Sugere livros que um utilizador ainda não leu, mas que são   bem avaliados por utilizadores semelhantes.
 Exemplo está com utilizador 277427.
 
-# Esta está a demorar imenso tempo, até tive de aumentar o timeout.
-# Talvez usar indexs
+ -Esta está a demorar imenso tempo, até tive de aumentar o timeout.
+ -Talvez usar indexs
 
 - 9 - Mostra a média de classificação e o número de livros avaliados por ano.
 
