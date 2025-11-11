@@ -58,7 +58,7 @@ def main():
     """
     run_query(cur, query3, "Top autores com melhor média de avaliação")
 
-    # 4️ - Livros populares por editora (mais avaliados)
+    # 4️ - Editoras com livros mais bem classificados
     query4 = """
         SELECT b.publisher, COUNT(r.ISBN) AS num_ratings
         FROM ratings r
@@ -71,7 +71,7 @@ def main():
 
     # 5️ - Query combinada (MySQL + MongoDB)
     # Nesta query, extraímos os IDs dos utilizadores mais ativos em MySQL,
-    # que depois serão usados no script do MongoDB para cruzar com preferências. ## PERGUNTAR AO STOR SE É NECESSÁRIO FAZER ISTO
+    # que depois serão usados no script do MongoDB para cruzar com preferências. 
     query5 = """
         SELECT user_id, COUNT(*) AS total_ratings
         FROM ratings
