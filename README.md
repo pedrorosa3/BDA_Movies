@@ -33,4 +33,13 @@ Exemplo está com utilizador 277427.
 - 9 - Mostra a média de classificação e o número de livros avaliados por ano.
 
 - 10 - Autores mais populares entre joven (até 25 anos)
-    
+
+# Para criar mongoDB num container docker
+No terminal ir até ao repo e:
+- docker pull mongo
+- docker-compose up -d
+- docker exec -it mongodb mongosh -u root -p <password> (Para testar)
+- python create_schema.py
+
+Depois de ter a bd no container criada falta popular. Para isso basta rodarem o InsertDataMongoDB,
+mas vejam as duas variaveis no inicio do script. Mudar a gosto.
