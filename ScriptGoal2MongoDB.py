@@ -11,12 +11,10 @@
 #         ratings: [ { user_id:int, book_rating:int } ]
 #     }
 #
-# Como correr:
-#   1) Mongo local (recomendado com Docker):
-#      docker run -d --name mongo-bda -p 27017:27017 -v mongo_data:/data/db mongo:6.0
-#      python ScriptGoal2_MongoDB.py
-#
-#   2) Se usares Atlas: substitui MONGO_URI pelo teu URI do Atlas.
+# Antes de correr:
+#      Verificar como queremos rodar.
+#      Se local num container -> USE_LOCAL_DB = True 
+#      Em caso de ATlas mudar para False e mudar o URI
 #
 # Conteúdo:
 #   - 1) Livros com média > X (agregações)
@@ -30,7 +28,7 @@
 #   - 9) Populares por localização (lookup users)
 #   - 10) Híbrida: livros favoritos dos utilizadores mais ativos (IDs vindos do SQL)
 #
-# NOTA: Evitei criar índices aqui para não misturar com o Goal 4.
+# NOTA: Não tem indexação
 # --------------------------------------------------
 
 from pymongo import MongoClient
@@ -57,12 +55,13 @@ else:
     db = client["bda_Group11"]
     print("Ligação ao MongoDB Atlas estabelecida com sucesso\n")
 
-# Parâmetros “demo” (troca conforme precisares)
-USER_TARGET = 277427                # um user real da tua BD
-ISBN_TARGET = "0345417623"          # mete um ISBN real da tua BD
-AUTHOR_DEMO = "Stephen King"        # exemplo para filtros
-YEAR_MIN    = 1990                  # exemplo para filtros
-ACTIVE_USERS_FROM_SQL = [277427, 114368, 11676]  # exemplo vindo do MySQL (query 5 SQL)
+# Parâmetros de teste
+USER_TARGET = 277427                
+ISBN_TARGET = "0345417623"          
+AUTHOR_DEMO = "Stephen King"        
+YEAR_MIN    = 1990                  
+ACTIVE_USERS_FROM_SQL = [277427, 114368, 11676,98391]  # Estes sao de teste, deveriam de vir do SQL 
+# os ultimos dois tive de procurar para a ultima query ter resultados
 
 # === HELPERS ===
 def show_section(title: str):
@@ -208,7 +207,7 @@ def main():
     )
     show_results(results7, f"Livros de '{AUTHOR_DEMO}' após {YEAR_MIN}")
 
-    # 8) Autores mais apreciados (analytics em documentos com ratings embutidos)
+    # 8) Autores mais apreciados 
     show_section("8) Autores mais apreciados (média de ratings)")
     pipeline8 = [
         {"$unwind": "$ratings"},
@@ -268,7 +267,7 @@ def main():
     show_results(results10, "Top livros entre os utilizadores ativos")
 
     client.close()
-    print("\n[OK] Fim do ScriptGoal2_MongoDB.\n")
+    print("\n Fim do ScriptGoal2_MongoDB.\n")
 
 if __name__ == "__main__":
     main()
