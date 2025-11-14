@@ -7,29 +7,21 @@ CONFIG = {
     "password": "<password>",
 }
 
-
 DDL = [
-    
+
+    # Apagar base antiga
     "DROP DATABASE IF EXISTS bda_Group11",
 
-    
+    # Criar base
     """
     CREATE DATABASE IF NOT EXISTS bda_Group11
       DEFAULT CHARACTER SET utf8mb4
       DEFAULT COLLATE utf8mb4_0900_ai_ci
     """,
+
     "USE bda_Group11",
 
-    # USERS
-    """
-    CREATE TABLE IF NOT EXISTS users (
-      user_id INT PRIMARY KEY,
-      location VARCHAR(255),
-      age INT
-    )
-    """,
-
-    # BOOKS
+    # BOOKS — mantém TODAS as colunas do CSV
     """
     CREATE TABLE IF NOT EXISTS books (
       ISBN VARCHAR(20) PRIMARY KEY,
@@ -43,15 +35,13 @@ DDL = [
     )
     """,
 
-    # RATINGS
+    # RATINGS — user_id vem do MongoDB, por isso SEM FK
     """
     CREATE TABLE IF NOT EXISTS ratings (
       user_id INT,
       ISBN VARCHAR(20),
       book_rating INT,
       PRIMARY KEY (user_id, ISBN),
-      FOREIGN KEY (user_id) REFERENCES users(user_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (ISBN) REFERENCES books(ISBN)
         ON UPDATE CASCADE ON DELETE CASCADE
     )
@@ -74,4 +64,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
