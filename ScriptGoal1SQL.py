@@ -25,15 +25,16 @@ DDL = [
     """
     CREATE TABLE IF NOT EXISTS books (
       ISBN VARCHAR(20) PRIMARY KEY,
-      book_title VARCHAR(255),
-      book_author VARCHAR(255),
+      book_title TEXT,
+      book_author TEXT,
       year_of_publication INT,
-      publisher VARCHAR(255),
+      publisher TEXT,
       image_url_s TEXT,
       image_url_m TEXT,
       image_url_l TEXT
     )
-    """,
+    """
+,
 
     # RATINGS — user_id vem do MongoDB, por isso SEM FK
     """
