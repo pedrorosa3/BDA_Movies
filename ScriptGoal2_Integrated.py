@@ -138,42 +138,7 @@ def main():
         print("\nLivro popular (SQL):", row)
         mongo_data = mongo.book_ratings.find_one({"ISBN": row["ISBN"]}, {"_id":0})
         #print("Ratings no Mongo:", mongo_data)
-
-    # ============================================================
-    # 5) Recomendação híbrida simples
-    # ============================================================
-    show("5) Recomendação híbrida (Mongo age → SQL livros → Mongo ratings)")
-
-    target_user = mongo.users.find_one({"age": {"$gte": 20, "$lte": 40}})
-    
-    if target_user:
-        uid = target_user["user_id"]
-        print("User alvo:", target_user)
-
-        # SQL → livros que users semelhantes avaliaram
-        query_rec = f"""
-            SELECT b.book_title, AVG(r.book_rating) AS avg_rating
-            FROM ratings r
-            JOIN books b ON r.ISBN = b.ISBN
-            WHERE r.user_id != {uid}
-            GROUP BY b.ISBN
-            HAVING AVG(r.book_rating) >= 7
-            ORDER BY avg_rating DESC
-            LIMIT 5;
-        """
-        cur.execute(query_rec)
-        rec_books = cur.fetchall()
-        print("\nRecomendações iniciais (SQL):")
-        for b in rec_books:
-            print(b)
-
-        print("\nComplemento Mongo:")
-        for b in rec_books:
-            doc = mongo.book_ratings.find_one({"ISBN": b["ISBN"]}, {"_id":0})
-            print(doc)
-    else:
-        print("Nenhum user para recomendação encontrada.")
-
+ 
     # ------------------------------
     # Fechar conexões
     # ------------------------------
