@@ -5,8 +5,8 @@ from collections import defaultdict
 # =====================================================================
 # CONFIG
 # =====================================================================
-USE_LOCAL_DB = True      # True → conectar local; False → Atlas
-LIMITED = False          # True → 20.000 primeiras linhas
+USE_LOCAL_DB = False      # True → conectar local; False → Atlas
+LIMITED = True         # True → 20.000 primeiras linhas
 
 # =====================================================================
 # CONEXÃO AO MONGO
@@ -21,7 +21,7 @@ if USE_LOCAL_DB:
     URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/"
     client = MongoClient(URI)
 else:
-    ATLAS_URI = "mongodb+srv://diogosfb91_db_user:<password>@cluster0.hszfcsx.mongodb.net/?appName=Cluster0"
+    ATLAS_URI = "mongodb+srv://guiti03_db_user:<password>@cluster0.ezv71oa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     client = MongoClient(ATLAS_URI)
     DB_NAME = "bda_Group11"
 

@@ -14,7 +14,7 @@ MYSQL_CONFIG = {
 # ============================================================
 # CONFIGURAÇÃO MONGO
 # ============================================================
-MONGO_URI = "mongodb://root:<password>@localhost:27017/"
+MONGO_URI = "mongodb+srv://guiti03_db_user:<password>@cluster0.ezv71oa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 MONGO_DB = "bda_Group11"
 
 # Função utilitária

@@ -14,7 +14,7 @@ MYSQL_CONFIG = {
     "database": "bda_Group11",
 }
 
-mongo = MongoClient("mongodb://root:<password>@localhost:27017/")["bda_Group11"]
+mongo = MongoClient("mongodb+srv://guiti03_db_user:<password>@cluster0.ezv71oa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")["bda_Group11"]
 
 # =============================================
 # MYSQL — WRITER (INSERT INTO BOOKS)
