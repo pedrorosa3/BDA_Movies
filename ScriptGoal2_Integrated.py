@@ -138,6 +138,46 @@ def main():
         print("\nLivro popular (SQL):", row)
         mongo_data = mongo.book_ratings.find_one({"ISBN": row["ISBN"]}, {"_id":0})
         #print("Ratings no Mongo:", mongo_data)
+        
+        
+    # ============================================================
+    # 5) 
+    # ============================================================
+    show("5) Autores mais bem avaliados (SQL) + Perfil dos leitores (Mongo)")
+
+    query = """
+        SELECT b.book_author, COUNT(*) AS total_ratings, ROUND(AVG(r.book_rating), 2) AS avg_rating
+        FROM ratings r
+        JOIN books b ON r.ISBN = b.ISBN
+        GROUP BY b.book_author
+        HAVING total_ratings >= 30
+        ORDER BY avg_rating DESC
+        LIMIT 5;
+    """
+    cur.execute(query)
+    authors = cur.fetchall()
+
+    for a in authors:
+        print("\nAutor:", a)
+
+        # Obter users que avaliaram livros deste autor
+        cur.execute("""
+            SELECT DISTINCT r.user_id
+            FROM ratings r
+            JOIN books b ON r.ISBN = b.ISBN
+            WHERE b.book_author = %s
+        """, (a["book_author"],))
+
+        sql_users = [u["user_id"] for u in cur.fetchall()]
+
+        profiles = list(mongo.users.find(
+            {"user_id": {"$in": sql_users}},
+            {"_id": 0}
+        ))
+
+        print("Perfis dos leitores (Mongo):", profiles)
+
+
  
     # ------------------------------
     # Fechar conexões
@@ -145,7 +185,7 @@ def main():
     cur.close()
     mysql_conn.close()
     mongo_client.close()
-    print("\n\nScript de queries híbridas concluído!\n")
+    print("\n\Queries concluídas!\n")
 
 
 if __name__ == "__main__":
