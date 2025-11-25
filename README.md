@@ -43,3 +43,18 @@ No terminal ir até ao repo e:
 
 Depois de ter a bd no container criada falta popular. Para isso basta rodarem o InsertDataMongoDB,
 mas vejam as duas variaveis no inicio do script. Mudar a gosto.
+
+
+
+## GOAL 4
+Mongo Local:
+
+py -m pip install mysql-connector-python pymongo pandas
+
+SQL Local:
+
+Instalar MySQL->server e workbench
+executar o ScriptGoal1SQL.py
+executar o InsertDataSQL.py
+
+executar o ScriptGoal4Master.py
