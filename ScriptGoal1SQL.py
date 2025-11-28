@@ -1,11 +1,5 @@
 import mysql.connector
-
-# Configuração da ligação MySQL
-CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "<password>",
-}
+from config import Config
 
 DDL = [
 
@@ -51,7 +45,12 @@ DDL = [
 
 
 def main():
-    conn = mysql.connector.connect(**CONFIG)
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
     cur = conn.cursor()
 
     for stmt in DDL:

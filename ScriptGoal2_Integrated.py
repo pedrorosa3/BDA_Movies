@@ -1,21 +1,6 @@
 from pymongo import MongoClient
 import mysql.connector
-
-# ============================================================
-# CONFIGURAÇÃO MYSQL
-# ============================================================
-MYSQL_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "<password>",
-    "database": "bda_Group11",
-}
-
-# ============================================================
-# CONFIGURAÇÃO MONGO
-# ============================================================
-MONGO_URI = "mongodb://root:<password>@localhost:27017/"
-MONGO_DB = "bda_Group11"
+from config import Config
 
 # Função utilitária
 def show(title):
@@ -30,11 +15,16 @@ def main():
     # ------------------------------
     # Abrir conexões
     # ------------------------------
-    mysql_conn = mysql.connector.connect(**MYSQL_CONFIG)
-    cur = mysql_conn.cursor(dictionary=True)    
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
+    cur = conn.cursor(dictionary=True)    
 
-    mongo_client = MongoClient(MONGO_URI)
-    mongo = mongo_client[MONGO_DB]
+    mongo_client = MongoClient(Config.build_mongo_uri())
+    db = mongo_client[Config.MONGO_DB]
 
     # ============================================================
     # 1) SQL → Top livros / Mongo → Utilizadores que os avaliaram
@@ -60,7 +50,7 @@ def main():
     # Agora usar estes ISBN no Mongo
     for book in top_books:
         isbn = book["ISBN"]
-        mongo_doc = mongo.book_ratings.find_one({"ISBN": isbn}, {"_id":0})
+        mongo_doc = db.book_ratings.find_one({"ISBN": isbn}, {"_id":0})
         print(f"\nRatings embutidos deste livro ({isbn}):")
         if mongo_doc:
             print(mongo_doc)
@@ -84,7 +74,7 @@ def main():
 
     for user in active_users:
         print("\nUser SQL:", user)
-        mongo_user = mongo.users.find_one({"user_id": user["user_id"]}, {"_id":0})
+        mongo_user = db.users.find_one({"user_id": user["user_id"]}, {"_id":0})
         print("User Mongo:", mongo_user)
 
     # ============================================================
@@ -92,7 +82,7 @@ def main():
     # ============================================================
     show("3) Users com idade 20–30 (Mongo) + livros mais avaliados por eles (SQL)")
 
-    users_age_20_30 = list(mongo.users.find(
+    users_age_20_30 = list(db.users.find(
         {"age": {"$gte": 20, "$lte": 30}},
         {"user_id": 1, "_id": 0}
     ))
@@ -136,7 +126,7 @@ def main():
 
     for row in most_rated:
         print("\nLivro popular (SQL):", row)
-        mongo_data = mongo.book_ratings.find_one({"ISBN": row["ISBN"]}, {"_id":0})
+        mongo_data = db.book_ratings.find_one({"ISBN": row["ISBN"]}, {"_id":0})
         #print("Ratings no Mongo:", mongo_data)
         
         
@@ -170,7 +160,7 @@ def main():
 
         sql_users = [u["user_id"] for u in cur.fetchall()]
 
-        profiles = list(mongo.users.find(
+        profiles = list(db.users.find(
             {"user_id": {"$in": sql_users}},
             {"_id": 0}
         ))
@@ -183,7 +173,7 @@ def main():
     # Fechar conexões
     # ------------------------------
     cur.close()
-    mysql_conn.close()
+    conn.close()
     mongo_client.close()
     print("\n\Queries concluídas!\n")
 

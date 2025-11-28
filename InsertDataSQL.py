@@ -1,12 +1,7 @@
 import mysql.connector
 import pandas as pd
+from config import Config
 
-CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "<password>",
-    "database": "bda_Group11",
-}
 
 def safe_int(v):
     try:
@@ -16,7 +11,12 @@ def safe_int(v):
 
 
 def main():
-    conn = mysql.connector.connect(**CONFIG)
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
     cur = conn.cursor()
 
     # ============================================================

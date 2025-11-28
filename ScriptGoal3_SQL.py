@@ -1,5 +1,6 @@
 import mysql.connector
 from pymongo import MongoClient
+from config import Config
 import threading
 import random
 import time
@@ -7,20 +8,22 @@ import time
 # =============================================
 # CONFIG
 # =============================================
-MYSQL_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "<password>",
-    "database": "bda_Group11",
-}
 
-mongo = MongoClient("mongodb://root:<password>@localhost:27017/")["bda_Group11"]
+mongo = MongoClient(Config.build_mongo_uri())
+db = mongo[Config.MONGO_DB]
+print(f"Ligado ao MongoDB local em {Config.MONGO_HOST}:{Config.MONGO_PORT}\n")
 
 # =============================================
 # MYSQL — WRITER (INSERT INTO BOOKS)
 # =============================================
 def mysql_insert_books(thread_id):
-    conn = mysql.connector.connect(**MYSQL_CONFIG)
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
+    
     cur = conn.cursor()
 
     start = time.time()
@@ -51,8 +54,10 @@ def mysql_insert_books(thread_id):
 # =============================================
 def mysql_read_recommendations(thread_id):
     conn = mysql.connector.connect(
-        **MYSQL_CONFIG,
-        connection_timeout=5
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
     )
     cur = conn.cursor(dictionary=True)
 
@@ -90,7 +95,7 @@ def mongo_update_users(thread_id):
         new_age = random.randint(10, 80)
 
         try:
-            mongo.users.update_one(
+            db.users.update_one(
                 {"user_id": user_id},
                 {"$set": {"location": new_location, "age": new_age}},
                 upsert=True
@@ -109,7 +114,7 @@ def mongo_read_users(thread_id):
     for _ in range(40):
         rand_id = random.randint(1, 5000)
         try:
-            _ = mongo.users.find_one({"user_id": rand_id})
+            _ = db.users.find_one({"user_id": rand_id})
         except Exception as e:
             print(f"[Mongo READ Thread {thread_id}] ERROR:", e)
 
