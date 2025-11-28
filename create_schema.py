@@ -25,12 +25,12 @@ print("Todas as coleções anteriores removidas.\n")
 # ============================================================
 users_schema = {
     "$jsonSchema": {
-        "bsonType": "object",
-        "required": ["user_id"],
+        "bsonType": "object",                     # O documento principal deve ser um objeto
+        "required": ["user_id"],                  # user_id é obrigatório
         "properties": {
-            "user_id": {"bsonType": "int"},
-            "location": {"bsonType": ["string", "null"]},
-            "age": {"bsonType": ["int", "null"]}
+            "user_id": {"bsonType": "int"},       # user_id tem de ser inteiro
+            "location": {"bsonType": ["string", "null"]},  # localização pode ser string ou null
+            "age": {"bsonType": ["int", "null"]} # idade pode ser inteira ou null
         }
     }
 }
@@ -44,19 +44,19 @@ print("Coleção 'users' criada com sucesso.")
 # ============================================================
 book_ratings_schema = {
     "$jsonSchema": {
-        "bsonType": "object",
-        "required": ["ISBN"],
+        "bsonType": "object",                             # Documento principal é um objeto
+        "required": ["ISBN"],                             # ISBN é obrigatório
         "properties": {
-            "ISBN": {"bsonType": "string"},
+            "ISBN": {"bsonType": "string"},               # ISBN deve ser string
 
-            "ratings": {
+            "ratings": {                                  # ratings é um array
                 "bsonType": ["array"],
                 "items": {
-                    "bsonType": "object",
-                    "required": ["user_id", "book_rating"],
+                    "bsonType": "object",                 # cada item do array é um objeto
+                    "required": ["user_id", "book_rating"],  # ambos obrigatórios
                     "properties": {
-                        "user_id": {"bsonType": "int"},
-                        "book_rating": {"bsonType": ["int", "null"]}
+                        "user_id": {"bsonType": "int"},   # user_id é inteiro
+                        "book_rating": {"bsonType": ["int", "null"]}  # rating pode ser int ou null
                     }
                 }
             }
