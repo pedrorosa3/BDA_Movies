@@ -1,17 +1,12 @@
 from pymongo import MongoClient
+from config import Config
 
 # ============================================================
 # MONGODB LOCAL (DOCKER)
 # ============================================================
-MONGO_USER = "root"
-MONGO_PASS = "<password>"
-MONGO_HOST = "localhost"
-MONGO_PORT = 27017
-DB_NAME = "bda_Group11"
-
-client = MongoClient(f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/")
-db = client[DB_NAME]
-print(f"Ligado ao MongoDB local em {MONGO_HOST}:{MONGO_PORT}\n")
+client = MongoClient(Config.build_mongo_uri())
+db = client[Config.MONGO_DB]
+print(f"Ligado ao MongoDB local em {Config.MONGO_HOST}:{Config.MONGO_PORT}\n")
 
 # ============================================================
 # LIMPAR COLEÇÕES ANTIGAS
@@ -68,5 +63,5 @@ db.create_collection("book_ratings", validator=book_ratings_schema)
 db.book_ratings.create_index("ISBN", unique=True)
 print("Coleção 'book_ratings' criada com sucesso.")
 
-print(f"\nBase de dados '{DB_NAME}' criada no MongoDB local.")
+print(f"\nBase de dados '{Config.DB_NAME}' criada no MongoDB local.")
 client.close()
