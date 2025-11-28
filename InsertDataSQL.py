@@ -1,15 +1,7 @@
 import mysql.connector
 import pandas as pd
+from config import Config
 
-# ============================================================
-# CONFIGURAÇÃO DA BASE DE DADOS
-# ============================================================
-CONFIG = {
-    "host": "localhost",      # endereço do servidor MySQL
-    "user": "root",           # utilizador
-    "password": "<password>", # password
-    "database": "bda_Group11" # base de dados onde iremos inserir os dados
-}
 
 
 # ============================================================
@@ -27,17 +19,13 @@ def safe_int(v):
 # PROGRAMA PRINCIPAL
 # ============================================================
 def main():
-
-    # ------------------------------------------------------------
-    # 1) Conectar ao MySQL
-    # ------------------------------------------------------------
-    try:
-        conn = mysql.connector.connect(**CONFIG)
-        cur = conn.cursor()
-        print("Ligação MySQL estabelecida com sucesso!\n")
-    except Exception as e:
-        print("❌ ERRO ao conectar ao MySQL:", e)
-        return
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
+    cur = conn.cursor()
 
     # ============================================================
     # 2) IMPORTAR BOOKS

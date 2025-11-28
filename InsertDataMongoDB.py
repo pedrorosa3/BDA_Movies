@@ -1,35 +1,15 @@
 from pymongo import MongoClient
 import pandas as pd
 from collections import defaultdict
+from config import Config
 
-# =====================================================================
-# CONFIGURAÇÕES PRINCIPAIS
-# =====================================================================
-USE_LOCAL_DB = True      # True → ligar à BD local; False → ligar ao MongoDB Atlas
-LIMITED = False          # True → carregar apenas 20.000 linhas (modo rápido)
 
 # =====================================================================
 # CONEXÃO AO MONGO
 # =====================================================================
-if USE_LOCAL_DB:
-    # Credenciais e host da BD local
-    MONGO_USER = "root"
-    MONGO_PASS = "<password>"
-    MONGO_HOST = "localhost"
-    MONGO_PORT = "27017"
-    DB_NAME = "bda_Group11"
-
-    # URI para ligação local (com autenticação)
-    URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/"
-    client = MongoClient(URI)
-else:
-    # Ligação ao MongoDB Atlas (cloud)
-    ATLAS_URI = "mongodb+srv://diogosfb91_db_user:<password>@cluster0.hszfcsx.mongodb.net/?appName=Cluster0"
-    client = MongoClient(ATLAS_URI)
-    DB_NAME = "bda_Group11"
-
-db = client[DB_NAME]
-print("Ligação ao MongoDB estabelecida.\n")
+client = MongoClient(Config.build_mongo_uri())
+db = client[Config.MONGO_DB]
+print(f"Ligado ao MongoDB local em {Config.MONGO_HOST}:{Config.MONGO_PORT}\n")
 
 
 # =====================================================================
@@ -58,7 +38,10 @@ def safe_int(value):
 # =====================================================================
 print("A carregar users.csv ...")
 
-nrows = 20000 if LIMITED else None   # limitar linhas (modo rápido)
+if Config.LIMITED == "True":  # Está em string porque o .env só suporta str
+    nrows = 20000
+else: 
+    nrows= None
 
 users = pd.read_csv(
     "users.csv",

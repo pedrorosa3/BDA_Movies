@@ -1,14 +1,5 @@
 import mysql.connector
-
-# --------------------------------------------------------------
-# Configuração da ligação MySQL (não inclui database porque a BD
-# ainda não existe neste momento — será criada no DDL).
-# --------------------------------------------------------------
-CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "<password>",
-}
+from config import Config
 
 # --------------------------------------------------------------
 # DDL — conjunto de comandos SQL para criar a base de dados
@@ -81,7 +72,12 @@ DDL = [
 #   - fecha a ligação
 # --------------------------------------------------------------
 def main():
-    conn = mysql.connector.connect(**CONFIG)
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
     cur = conn.cursor()
 
     for stmt in DDL:
