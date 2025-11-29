@@ -1,30 +1,63 @@
-from pymongo import MongoClient
+"""
+Script de Análises Híbridas (MySQL + MongoDB)
+------------------------------------------------
+Inclui:
+  • 2 queries SQL
+  • 2 queries MongoDB
+  • 2 queries híbridas (reutilizam as anteriores)
+  • Pelo menos uma query SQL com dois JOINs relevantes
+  • Código robusto, limpo e totalmente comentado em português
+"""
+
 import mysql.connector
+from mysql.connector import Error as MySQLError
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+from typing import List, Dict, Any
+import os
+import sys
+import pprint
+from ScriptGoal4 import MYSQL_CONFIG
 from config import Config
 
 
 # ============================================================
-# MAIN
+#  FUNÇÕES DE LIGAÇÃO
 # ============================================================
-def main():
-    # ------------------------------
-    # Abrir conexões
-    # ------------------------------
-    conn = mysql.connector.connect(
-        host=Config.MYSQL_HOST,
-        user=Config.MYSQL_USER,
-        password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DB
-    )
-    cur = conn.cursor(dictionary=True)    
+def get_sql_client():
+    """Cria ligação ao MySQL e devolve o objeto de ligação."""
+    try:
 
-    mongo_client = MongoClient(Config.build_mongo_uri())
-    db = mongo_client[Config.MONGO_DB]
+        conn = mysql.connector.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB
+        )   
+        return conn
+    except MySQLError as e:
+        print("Falha ao ligar ao MySQL:", e, file=sys.stderr)
+        raise
 
+
+def get_sql_connection():
+    """Cria ligação ao MySQL e devolve o objeto de ligação."""
+    try:
+        conn = mysql.connector.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB
+        )
+        return mysql.connector.connect(conn)
+    except MySQLError as e:
+        print("Falha ao ligar ao MySQL:", e, file=sys.stderr)
+        raise
 def get_mongo_client():
     """Cria ligação ao MongoDB e devolve o cliente."""
     try:
-        return MongoClient(MONGO_URI)
+        return MongoClient(Config.build_mongo_uri())
+        
     except PyMongoError as e:
         print("Falha ao ligar ao MongoDB:", e, file=sys.stderr)
         raise
@@ -41,15 +74,10 @@ def sql_top10_livros_por_rating() -> List[Dict[str, Any]]:
     JOIN 1 → tabela com nº total de ratings por ISBN  
     JOIN 2 → tabela com média de ratings por ISBN
 
-    # Agora usar estes ISBN no Mongo
-    for book in top_books:
-        isbn = book["ISBN"]
-        mongo_doc = db.book_ratings.find_one({"ISBN": isbn}, {"_id":0})
-        print(f"\nRatings embutidos deste livro ({isbn}):")
-        if mongo_doc:
-            print(mongo_doc)
-        else:
-            print("Sem ratings no Mongo.")
+    Estes JOINs são necessários para combinar contagem + média de forma eficiente.
+    """
+    conn = get_sql_connection()
+    cur = conn.cursor(dictionary=True)
 
     query = """
         SELECT b.ISBN, b.book_title,
@@ -92,76 +120,24 @@ def sql_top_utilizadores(limit=10) -> List[Dict[str, Any]]:
         LIMIT %s;
     """
 
-    for user in active_users:
-        print("\nUser SQL:", user)
-        mongo_user = db.users.find_one({"user_id": user["user_id"]}, {"_id":0})
-        print("User Mongo:", mongo_user)
+    try:
+        cur.execute(query, (limit,))
+        return cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
 
 
-    users_age_20_30 = list(db.users.find(
-        {"age": {"$gte": 20, "$lte": 30}},
-        {"user_id": 1, "_id": 0}
-    ))
-
-    user_ids = tuple([u["user_id"] for u in users_age_20_30])
-
-    print(f"Total users 20-30 anos no Mongo: {len(user_ids)}")
-
-    if len(user_ids) > 0:
-        query_young_books = f"""
-            SELECT b.book_title, COUNT(*) AS num_ratings, ROUND(AVG(r.book_rating),2) AS avg_rating
-            FROM ratings r
-            JOIN books b ON r.ISBN = b.ISBN
-            WHERE r.user_id IN {user_ids}
-            GROUP BY b.ISBN
-            HAVING COUNT(*) >= 15
-            ORDER BY avg_rating DESC
-            LIMIT 10;
-        """
-        cur.execute(query_young_books)
-        top_young_books = cur.fetchall()
-        for row in top_young_books:
-            print(row)
-    else:
-        print("Nenhum user entre 20 e 30 anos encontrado.")
-
-    # ============================================================
-    # 4) SQL → livros mais populares / Mongo → ratings embutidos
-    # ============================================================
-    show("4) Livros mais populares (SQL) + análise rápida dos ratings Mongo")
-
-    query_popular = """
-        SELECT ISBN, COUNT(*) AS total_ratings
-        FROM ratings
-        GROUP BY ISBN
-        ORDER BY total_ratings DESC
-        LIMIT 5;
+# ================================================================
+# 2) QUERIES MONGO (2)
+# ================================================================
+def mongo_top_users(limit=10) -> List[Dict[str, Any]]:
     """
-    cur.execute(query_popular)
-    most_rated = cur.fetchall()
-
-    for row in most_rated:
-        print("\nLivro popular (SQL):", row)
-        mongo_data = db.book_ratings.find_one({"ISBN": row["ISBN"]}, {"_id":0})
-        #print("Ratings no Mongo:", mongo_data)
-        
-        
-    # ============================================================
-    # 5) 
-    # ============================================================
-    show("5) Autores mais bem avaliados (SQL) + Perfil dos leitores (Mongo)")
-
-    query = """
-        SELECT b.book_author, COUNT(*) AS total_ratings, ROUND(AVG(r.book_rating), 2) AS avg_rating
-        FROM ratings r
-        JOIN books b ON r.ISBN = b.ISBN
-        GROUP BY b.book_author
-        HAVING total_ratings >= 30
-        ORDER BY avg_rating DESC
-        LIMIT 5;
+    Query MongoDB #1 — Top utilizadores pela quantidade total de ratings
+    (baseado na coleção embebida "book_ratings").
     """
     client = get_mongo_client()
-    db = client[MONGO_DB]
+    db = client[Config.MONGO_DB]
 
     pipeline = [
         {"$unwind": "$ratings"},  # separa cada rating num documento independente
@@ -171,32 +147,139 @@ def sql_top_utilizadores(limit=10) -> List[Dict[str, Any]]:
         {"$project": {"user_id": "$_id", "total": 1, "_id": 0}},
     ]
 
-        # Obter users que avaliaram livros deste autor
-        cur.execute("""
-            SELECT DISTINCT r.user_id
-            FROM ratings r
-            JOIN books b ON r.ISBN = b.ISBN
-            WHERE b.book_author = %s
-        """, (a["book_author"],))
-
-        sql_users = [u["user_id"] for u in cur.fetchall()]
-
-        profiles = list(db.users.find(
-            {"user_id": {"$in": sql_users}},
-            {"_id": 0}
-        ))
-
-        print("Perfis dos leitores (Mongo):", profiles)
+    try:
+        return list(db.book_ratings.aggregate(pipeline))
+    finally:
+        client.close()
 
 
- 
-    # ------------------------------
-    # Fechar conexões
-    # ------------------------------
-    cur.close()
-    conn.close()
-    mongo_client.close()
-    print("\n\Queries concluídas!\n")
+def mongo_top_livros(limit=10) -> List[Dict[str, Any]]:
+    """
+    Query MongoDB #2 — Top livros pela média de ratings no Mongo.
+    """
+    client = get_mongo_client()
+    db = client[Config.MONGO_DB]
+
+    pipeline = [
+        {"$unwind": "$ratings"},
+        {"$group": {"_id": "$ISBN", "avg_rating": {"$avg": "$ratings.book_rating"}, "count": {"$sum": 1}}},
+        {"$match": {"count": {"$gte": 5}}},
+        {"$sort": {"avg_rating": -1}},
+        {"$limit": limit},
+        {"$project": {"ISBN": "$_id", "avg_rating": 1, "count": 1, "_id": 0}},
+    ]
+
+    try:
+        return list(db.book_ratings.aggregate(pipeline))
+    finally:
+        client.close()
+
+
+# ================================================================
+# 3) QUERIES HÍBRIDAS (2)
+# ================================================================
+def hibrido_top_users_com_perfil(limit=10) -> List[Dict[str, Any]]:
+    """
+    Query Híbrida #1:
+      • Usa SQL para obter top utilizadores (sql_top_utilizadores)
+      • Depois vai ao Mongo buscar o perfil (idade/localização)
+    """
+    # Reutilização da query SQL
+    top_sql = sql_top_utilizadores(limit=limit)
+    ids = [u["user_id"] for u in top_sql]
+
+    client = get_mongo_client()
+    db = client[Config.MONGO_DB]
+
+    try:
+        perfis = {
+            d["user_id"]: d for d in db.users.find(
+                {"user_id": {"$in": ids}},
+                {"_id": 0}
+            )
+        }
+
+        resultado = []
+        for u in top_sql:
+            uid = u["user_id"]
+            perfil = perfis.get(uid, {})
+            resultado.append({
+                "user_id": uid,
+                "total_ratings": u["total_ratings"],
+                "location": perfil.get("location"),
+                "age": perfil.get("age"),
+            })
+
+        return resultado
+
+    finally:
+        client.close()
+
+
+def hibrido_top_livros_enriquecido(limit=10) -> List[Dict[str, Any]]:
+    """
+    Query Híbrida #2:
+      • Usa SQL para obter top livros (sql_top10_livros_por_rating)
+      • Enriquecido com métricas MongoDB (média Mongo + nº ratings Mongo)
+    """
+    top_sql = sql_top10_livros_por_rating()
+    isbns = [b["ISBN"] for b in top_sql]
+
+    client = get_mongo_client()
+    db = client[Config.MONGO_DB]
+
+    try:
+        pipeline = [
+            {"$match": {"ISBN": {"$in": isbns}}},
+            {"$unwind": "$ratings"},
+            {"$group": {"_id": "$ISBN", "mongo_avg": {"$avg": "$ratings.book_rating"}, "count": {"$sum": 1}}},
+            {"$project": {"ISBN": "$_id", "mongo_avg": 1, "count": 1, "_id": 0}},
+        ]
+
+        mongo_map = {d["ISBN"]: d for d in db.book_ratings.aggregate(pipeline)}
+
+        final = []
+        for b in top_sql:
+            isbn = b["ISBN"]
+            mongo = mongo_map.get(isbn, {})
+            final.append({
+                "ISBN": isbn,
+                "book_title": b["book_title"],
+                "sql_avg": float(b["avg_rating"]),
+                "sql_total_ratings": int(b["total_ratings"]),
+                "mongo_avg": mongo.get("mongo_avg"),
+                "mongo_ratings": mongo.get("count", 0),
+            })
+
+        return final
+
+    finally:
+        client.close()
+
+
+# ================================================================
+# MAIN (demonstração)
+# ================================================================
+def main():
+    pp = pprint.PrettyPrinter(indent=2)
+
+    print("\nSQL → Top 10 livros:")
+    pp.pprint(sql_top10_livros_por_rating())
+
+    print("\nSQL → Top utilizadores:")
+    pp.pprint(sql_top_utilizadores())
+
+    print("\nMongo → Top utilizadores Mongo:")
+    pp.pprint(mongo_top_users())
+
+    print("\nMongo → Top livros Mongo:")
+    pp.pprint(mongo_top_livros())
+
+    print("\nHíbrido → SQL utilizadores + perfil Mongo:")
+    pp.pprint(hibrido_top_users_com_perfil())
+
+    print("\nHíbrido → SQL livros + estatísticas Mongo:")
+    pp.pprint(hibrido_top_livros_enriquecido())
 
 
 if __name__ == "__main__":
