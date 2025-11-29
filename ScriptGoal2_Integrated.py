@@ -2,10 +2,10 @@
 Script de Análises Híbridas (MySQL + MongoDB)
 ------------------------------------------------
 Inclui:
-  • 2 queries SQL
+  • 3 queries SQL
   • 2 queries MongoDB
   • 2 queries híbridas (reutilizam as anteriores)
-  • Pelo menos uma query SQL com dois JOINs relevantes
+  • Self-Join real (b1 JOIN b2)
   • Código robusto, limpo e totalmente comentado em português
 """
 
@@ -14,10 +14,8 @@ from mysql.connector import Error as MySQLError
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from typing import List, Dict, Any
-import os
-import sys
 import pprint
-from ScriptGoal4 import MYSQL_CONFIG
+import sys
 from config import Config
 
 
@@ -27,40 +25,35 @@ from config import Config
 def get_sql_connection():
     """Cria ligação ao MySQL e devolve o objeto de ligação."""
     try:
-
         conn = mysql.connector.connect(
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
             database=Config.MYSQL_DB
-        )   
+        )
         return conn
     except MySQLError as e:
         print("Falha ao ligar ao MySQL:", e, file=sys.stderr)
         raise
 
+
 def get_mongo_client():
     """Cria ligação ao MongoDB e devolve o cliente."""
     try:
         return MongoClient(Config.build_mongo_uri())
-        
     except PyMongoError as e:
         print("Falha ao ligar ao MongoDB:", e, file=sys.stderr)
         raise
 
 
-# ================================================================
-# 1) QUERIES SQL (2)
-# ================================================================
+# ============================================================
+# 1) QUERIES SQL (3)
+# ============================================================
+
 def sql_top10_livros_por_rating() -> List[Dict[str, Any]]:
     """
     Query SQL #1 — Top 10 livros pela média de rating.
-    Usa DOIS JOINs relevantes (não são decorativos):
-
-    JOIN 1 → tabela com nº total de ratings por ISBN  
-    JOIN 2 → tabela com média de ratings por ISBN
-
-    Estes JOINs são necessários para combinar contagem + média de forma eficiente.
+    Usa dois JOINs reais e relevantes.
     """
     conn = get_sql_connection()
     cur = conn.cursor(dictionary=True)
@@ -74,12 +67,12 @@ def sql_top10_livros_por_rating() -> List[Dict[str, Any]]:
             SELECT ISBN, COUNT(*) AS total_ratings
             FROM ratings
             GROUP BY ISBN
-        ) c ON c.ISBN = b.ISBN     -- JOIN relevante: contagem de ratings
+        ) c ON c.ISBN = b.ISBN
         JOIN (
             SELECT ISBN, AVG(book_rating) AS avg_rating
             FROM ratings
             GROUP BY ISBN
-        ) a ON a.ISBN = b.ISBN     -- JOIN relevante: média de ratings
+        ) a ON a.ISBN = b.ISBN
         WHERE c.total_ratings >= 5
         ORDER BY a.avg_rating DESC
         LIMIT 10;
@@ -93,15 +86,21 @@ def sql_top10_livros_por_rating() -> List[Dict[str, Any]]:
         conn.close()
 
 
-def sql_top_utilizadores(limit=10) -> List[Dict[str, Any]]:
-    """Query SQL #2 — Top utilizadores com mais ratings."""
+def sql_top_livros_populares(limit=10) -> List[Dict[str, Any]]:
+    """
+    Query SQL #2 — Top livros mais populares (por nº de ratings).
+    """
     conn = get_sql_connection()
     cur = conn.cursor(dictionary=True)
 
     query = """
-        SELECT user_id, COUNT(*) AS total_ratings
-        FROM ratings
-        GROUP BY user_id
+        SELECT 
+            b.ISBN,
+            b.book_title,
+            COUNT(*) AS total_ratings
+        FROM ratings r
+        JOIN books b ON b.ISBN = r.ISBN
+        GROUP BY b.ISBN, b.book_title
         ORDER BY total_ratings DESC
         LIMIT %s;
     """
@@ -114,19 +113,48 @@ def sql_top_utilizadores(limit=10) -> List[Dict[str, Any]]:
         conn.close()
 
 
-# ================================================================
+def sql_livros_mesmo_autor(limit=20) -> List[Dict[str, Any]]:
+    """
+    Query SQL #3 — Self-Join (b1, b2):
+    Encontra pares de livros do mesmo autor.
+    """
+    conn = get_sql_connection()
+    cur = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            b1.book_author AS author,
+            b1.book_title AS book1,
+            b2.book_title AS book2,
+            b1.ISBN AS isbn1,
+            b2.ISBN AS isbn2
+        FROM books b1
+        INNER JOIN books b2 
+            ON b1.book_author = b2.book_author
+            AND b1.ISBN < b2.ISBN
+        ORDER BY author
+        LIMIT %s;
+    """
+
+    try:
+        cur.execute(query, (limit,))
+        return cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ============================================================
 # 2) QUERIES MONGO (2)
-# ================================================================
+# ============================================================
+
 def mongo_top_users(limit=10) -> List[Dict[str, Any]]:
-    """
-    Query MongoDB #1 — Top utilizadores pela quantidade total de ratings
-    (baseado na coleção embebida "book_ratings").
-    """
+    """Top utilizadores Mongo pela quantidade de ratings embebidos."""
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
 
     pipeline = [
-        {"$unwind": "$ratings"},  # separa cada rating num documento independente
+        {"$unwind": "$ratings"},
         {"$group": {"_id": "$ratings.user_id", "total": {"$sum": 1}}},
         {"$sort": {"total": -1}},
         {"$limit": limit},
@@ -139,135 +167,154 @@ def mongo_top_users(limit=10) -> List[Dict[str, Any]]:
         client.close()
 
 
-def mongo_top_livros(limit=10) -> List[Dict[str, Any]]:
-    """
-    Query MongoDB #2 — Top livros pela média de ratings no Mongo.
-    """
+def mongo_top_localizacoes(limit=10) -> List[Dict[str, Any]]:
+    """Top localizações com maior número de utilizadores."""
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
 
     pipeline = [
-        {"$unwind": "$ratings"},
-        {"$group": {"_id": "$ISBN", "avg_rating": {"$avg": "$ratings.book_rating"}, "count": {"$sum": 1}}},
-        {"$match": {"count": {"$gte": 5}}},
-        {"$sort": {"avg_rating": -1}},
+        {"$match": {"location": {"$ne": None}}},
+        {"$group": {"_id": "$location", "num_users": {"$sum": 1}}},
+        {"$sort": {"num_users": -1}},
         {"$limit": limit},
-        {"$project": {"ISBN": "$_id", "avg_rating": 1, "count": 1, "_id": 0}},
+        {"$project": {"location": "$_id", "num_users": 1, "_id": 0}}
     ]
 
     try:
-        return list(db.book_ratings.aggregate(pipeline))
+        return list(db.users.aggregate(pipeline))
     finally:
         client.close()
 
 
-# ================================================================
+# ============================================================
 # 3) QUERIES HÍBRIDAS (2)
-# ================================================================
-def hibrido_top_users_com_perfil(limit=10) -> List[Dict[str, Any]]:
+# ============================================================
+
+def hibrido_localizacoes_com_atividade(limit=10) -> List[Dict[str, Any]]:
     """
-    Query Híbrida #1:
-      • Usa SQL para obter top utilizadores (sql_top_utilizadores)
-      • Depois vai ao Mongo buscar o perfil (idade/localização)
+    Híbrido #1:
+      - Top localizações Mongo
+      - Para cada localização, total de ratings SQL feitos pelos users dessa zona
     """
-    # Reutilização da query SQL
-    top_sql = sql_top_utilizadores(limit=limit)
-    ids = [u["user_id"] for u in top_sql]
+    top_loc = mongo_top_localizacoes(limit=limit)
 
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
 
-    try:
-        perfis = {
-            d["user_id"]: d for d in db.users.find(
-                {"user_id": {"$in": ids}},
-                {"_id": 0}
-            )
-        }
+    conn = get_sql_connection()
+    cur = conn.cursor(dictionary=True)
 
-        resultado = []
-        for u in top_sql:
-            uid = u["user_id"]
-            perfil = perfis.get(uid, {})
-            resultado.append({
-                "user_id": uid,
-                "total_ratings": u["total_ratings"],
-                "location": perfil.get("location"),
-                "age": perfil.get("age"),
+    resultados = []
+
+    try:
+        for loc in top_loc:
+            local = loc["location"]
+
+            users = list(db.users.find(
+                {"location": local},
+                {"_id": 0, "user_id": 1}
+            ))
+
+            user_ids = [u["user_id"] for u in users]
+
+            if not user_ids:
+                resultados.append({
+                    "location": local,
+                    "mongo_users": loc["num_users"],
+                    "sql_total_ratings": 0
+                })
+                continue
+
+            placeholders = ",".join(["%s"] * len(user_ids))
+
+            query = f"""
+                SELECT COUNT(*) AS total_ratings
+                FROM ratings
+                WHERE user_id IN ({placeholders})
+            """
+
+            cur.execute(query, tuple(user_ids))
+            sql_data = cur.fetchone()
+
+            resultados.append({
+                "location": local,
+                "mongo_users": loc["num_users"],
+                "sql_total_ratings": int(sql_data["total_ratings"])
             })
 
-        return resultado
+        return resultados
 
     finally:
+        cur.close()
+        conn.close()
         client.close()
 
 
-def hibrido_top_livros_enriquecido(limit=10) -> List[Dict[str, Any]]:
+def hibrido_livros_populares_com_users(limit=10) -> List[Dict[str, Any]]:
     """
-    Query Híbrida #2:
-      • Usa SQL para obter top livros (sql_top10_livros_por_rating)
-      • Enriquecido com métricas MongoDB (média Mongo + nº ratings Mongo)
+    Híbrido #2:
+      - Top livros SQL (por nº ratings)
+      - Ver quantos utilizadores Mongo avaliaram também esses livros
     """
-    top_sql = sql_top10_livros_por_rating()
+    top_sql = sql_top_livros_populares(limit=limit)
     isbns = [b["ISBN"] for b in top_sql]
 
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
 
-    try:
-        pipeline = [
-            {"$match": {"ISBN": {"$in": isbns}}},
-            {"$unwind": "$ratings"},
-            {"$group": {"_id": "$ISBN", "mongo_avg": {"$avg": "$ratings.book_rating"}, "count": {"$sum": 1}}},
-            {"$project": {"ISBN": "$_id", "mongo_avg": 1, "count": 1, "_id": 0}},
-        ]
+    pipeline = [
+        {"$match": {"ISBN": {"$in": isbns}}},
+        {"$unwind": "$ratings"},
+        {"$group": {"_id": "$ISBN", "mongo_users": {"$addToSet": "$ratings.user_id"}}},
+        {"$project": {"ISBN": "$_id", "mongo_users": 1, "_id": 0}},
+    ]
 
-        mongo_map = {d["ISBN"]: d for d in db.book_ratings.aggregate(pipeline)}
+    mongo_map = {d["ISBN"]: d for d in db.book_ratings.aggregate(pipeline)}
 
-        final = []
-        for b in top_sql:
-            isbn = b["ISBN"]
-            mongo = mongo_map.get(isbn, {})
-            final.append({
-                "ISBN": isbn,
-                "book_title": b["book_title"],
-                "sql_avg": float(b["avg_rating"]),
-                "sql_total_ratings": int(b["total_ratings"]),
-                "mongo_avg": mongo.get("mongo_avg"),
-                "mongo_ratings": mongo.get("count", 0),
-            })
+    client.close()
 
-        return final
+    final = []
+    for b in top_sql:
+        isbn = b["ISBN"]
+        mongo = mongo_map.get(isbn, {"mongo_users": []})
 
-    finally:
-        client.close()
+        final.append({
+            "ISBN": isbn,
+            "book_title": b["book_title"],
+            "sql_total_ratings": int(b["total_ratings"]),
+            "mongo_users_count": len(mongo["mongo_users"])
+        })
+
+    return final
 
 
-# ================================================================
-# MAIN (demonstração)
-# ================================================================
+# ============================================================
+# MAIN
+# ============================================================
 def main():
     pp = pprint.PrettyPrinter(indent=2)
 
-    print("\nSQL → Top 10 livros:")
+    print("\nSQL → Top livros por média:")
     pp.pprint(sql_top10_livros_por_rating())
 
-    print("\nSQL → Top utilizadores:")
-    pp.pprint(sql_top_utilizadores())
+    print("\nSQL → Top livros mais populares:")
+    pp.pprint(sql_top_livros_populares())
 
-    print("\nMongo → Top utilizadores Mongo:")
+    print("\nSQL → Livros do mesmo autor (SELF JOIN):")
+    pp.pprint(sql_livros_mesmo_autor())
+
+    print("\nMongo → Top utilizadores (ratings embed):")
     pp.pprint(mongo_top_users())
 
-    print("\nMongo → Top livros Mongo:")
-    pp.pprint(mongo_top_livros())
+    print("\nMongo → Top localizações:")
+    pp.pprint(mongo_top_localizacoes())
 
-    print("\nHíbrido → SQL utilizadores + perfil Mongo:")
-    pp.pprint(hibrido_top_users_com_perfil())
+    print("\nHíbrido → Localizações + atividade SQL:")
+    pp.pprint(hibrido_localizacoes_com_atividade())
 
-    print("\nHíbrido → SQL livros + estatísticas Mongo:")
-    pp.pprint(hibrido_top_livros_enriquecido())
+    print("\nHíbrido → Livros populares + users Mongo:")
+    pp.pprint(hibrido_livros_populares_com_users())
 
 
 if __name__ == "__main__":
     main()
-
