@@ -39,20 +39,6 @@ def get_sql_client():
         print("Falha ao ligar ao MySQL:", e, file=sys.stderr)
         raise
 
-
-def get_sql_connection():
-    """Cria ligação ao MySQL e devolve o objeto de ligação."""
-    try:
-        conn = mysql.connector.connect(
-            host=Config.MYSQL_HOST,
-            user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
-        )
-        return mysql.connector.connect(conn)
-    except MySQLError as e:
-        print("Falha ao ligar ao MySQL:", e, file=sys.stderr)
-        raise
 def get_mongo_client():
     """Cria ligação ao MongoDB e devolve o cliente."""
     try:
