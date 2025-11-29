@@ -6,7 +6,7 @@ Pedro Rosa nº60294
 ## MongoDB Local
 Pré‑requisitos:
 ```bash
-py -m pip install mysql-connector-python pymongo pandas
+py -m pip install mysql-connector-python pymongo pandas dotenv
 ```
 Criar container do MongoDB:
 ```bash
