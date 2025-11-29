@@ -24,7 +24,7 @@ from config import Config
 # ============================================================
 #  FUNÇÕES DE LIGAÇÃO
 # ============================================================
-def get_sql_client():
+def get_sql_connection():
     """Cria ligação ao MySQL e devolve o objeto de ligação."""
     try:
 
