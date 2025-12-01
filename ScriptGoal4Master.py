@@ -19,6 +19,7 @@ import time
 import csv
 import traceback
 from datetime import datetime
+from config import Config
 
 # Paths to uploaded files (developer note: using uploaded file paths)
 UPLOADED_SCRIPT_PATH = "ScriptGoal3_SQL.py"

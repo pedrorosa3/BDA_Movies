@@ -58,23 +58,18 @@ def sql_top10_livros_por_rating() -> List[Dict[str, Any]]:
     conn = get_sql_connection()
     cur = conn.cursor(dictionary=True)
 
+    
     query = """
-        SELECT b.ISBN, b.book_title,
-               c.total_ratings,
-               a.avg_rating
-        FROM books b
-        JOIN (
-            SELECT ISBN, COUNT(*) AS total_ratings
-            FROM ratings
-            GROUP BY ISBN
-        ) c ON c.ISBN = b.ISBN
-        JOIN (
-            SELECT ISBN, AVG(book_rating) AS avg_rating
-            FROM ratings
-            GROUP BY ISBN
-        ) a ON a.ISBN = b.ISBN
-        WHERE c.total_ratings >= 5
-        ORDER BY a.avg_rating DESC
+        SELECT
+            b.ISBN,
+            b.book_title,
+            COUNT(*) AS total_ratings,
+            AVG(r.book_rating) AS avg_rating
+        FROM ratings r
+        JOIN books b ON b.ISBN = r.ISBN
+        GROUP BY b.ISBN, b.book_title
+        HAVING COUNT(*) > 10
+        ORDER BY avg_rating DESC
         LIMIT 10;
     """
 
