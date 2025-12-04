@@ -582,12 +582,12 @@ def mongo_atomic_inc_solution(iterations: int = 3):
     final = coll.find_one({"_id": "counter1"}).get("cnt")
     client.close()
     print("[Mongo] Resultado final (esperado", iterations, "):", final)
-
+"""
 def mongo_transaction_demo():
-    """
-    Demonstração de transacção multi-documento (apenas funciona em replica-set).
-    Tenta fazer commit e forçar rollback para demonstrar atomicidade.
-    """
+
+    #Demonstração de transacção multi-documento (apenas funciona em replica-set).
+    #Tenta fazer commit e forçar rollback para demonstrar atomicidade.
+    
     print("\n[Mongo] Test - transacção multi-documento (se suportado)")
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
@@ -610,7 +610,7 @@ def mongo_transaction_demo():
         print("[Mongo] Não foi possível executar transacção (provavelmente sem suporte):", e)
     finally:
         client.close()
-
+"""
 # -----------------------
 # Hybrid examples (SQL+Mongo)
 # -----------------------
@@ -640,7 +640,6 @@ def hybrid_sql_top_users_enrich_with_mongo(limit: int = 5):
         })
     client.close()
     pp.pprint(merged)
-    print("[Hybrid] Nota: se novos ratings forem inseridos entre o SELECT SQL e a leitura Mongo, resultados podem divergir (consistência eventual).")
 
 def hybrid_mongo_aggregate_compare_to_sql():
     """
@@ -669,7 +668,6 @@ def hybrid_mongo_aggregate_compare_to_sql():
     pp.pprint(mongo_stats)
     print("SQL (top 10 by count):")
     pp.pprint(sql_stats)
-    print("[Hybrid] Nota: divergências podem surgir se writes ocorrerem simultaneamente nas duas fontes.")
 
 # -----------------------
 # Execução orquestrada dos testes adaptados ao projeto
@@ -705,7 +703,7 @@ def run_all_project_scenarios():
     print("\n=== Cenários Mongo ===")
     mongo_lost_update_read_modify_write(iterations=3)
     mongo_atomic_inc_solution(iterations=3)
-    mongo_transaction_demo()
+    #mongo_transaction_demo()
 
     # Hybrid scenarios
     print("\n=== Cenários Híbridos ===")

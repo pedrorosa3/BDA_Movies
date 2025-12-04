@@ -3,7 +3,6 @@ import pandas as pd
 from collections import defaultdict
 from config import Config
 
-
 # =====================================================================
 # CONEXÃO AO MONGO
 # =====================================================================
@@ -129,7 +128,10 @@ if batch:
 
 print(f"Total de documentos book_ratings inseridos: {count:,}\n")
 
+import consistency_crossover as consistency
 
+# correr o script
+consistency.main()
 # =====================================================================
 # RESUMO FINAL
 # =====================================================================
