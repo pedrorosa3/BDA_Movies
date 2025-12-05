@@ -24,8 +24,14 @@ Popular a base de dados:
 ## MySQL Local
 Instalar:
 - MySQL Server  
-- MySQL Workbench  
+- MySQL Workbench
+
+
 Executar scripts na seguinte ordem:
-1. `ScriptGoal1SQL.py` – cria a base de dados e tabelas.
+1. `ScriptGoal1SQL.py` – cria a base de dados e tabelas SQl.
 2. `InsertDataSQL.py` – popula as tabelas SQL com os CSV.
-3. `ScriptGoal4Master.py` – scripts finais agregados para o GOAL 4.
+1. `create_schema.py` – cria a base de dados e tabelas Mongo.
+1. `InsertDataMongo.py` – popula as tabelas Mongo com os CSV.
+2. `ScriptGoal2_Integrated.py` – Faz as querys para SQL e Mongo.
+3. `ScriptGoal3.py` – Faz testes de concorrência em SQL e em Mongo.
+3. `goal4.py` – Otimiza as bases de dados e as querys através de indexs.

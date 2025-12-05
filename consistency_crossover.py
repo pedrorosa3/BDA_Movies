@@ -34,7 +34,7 @@ def get_mongo_client():
 
 
 def main():
-    print("Carregando dados ...")
+    print("A confirmar consistência de dados ...")
     conn=get_sql_connection()
     cur = conn.cursor(dictionary=True)
     client=get_mongo_client()
@@ -57,7 +57,7 @@ def main():
 
     for doc in cache.values():
         db.book_ratings.insert_one(doc)
-    print("Quase a acabar...")
+    print("Consistência confirmada.")
 
     
 

@@ -564,7 +564,7 @@ def main():
     print("====================================================")
 
     
-    n_runs = 10
+    n_runs = 4
 
     base_sql_top10, t1 = medir_tempo(
         ScriptGoal2_Integrated.sql_top10_livros_por_rating,
