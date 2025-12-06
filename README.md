@@ -8,7 +8,9 @@ Pré‑requisitos:
 ```bash
 py -m pip install mysql-connector-python pymongo pandas dotenv
 ```
-Criar container do MongoDB:
+Caso a ligação seja feita via Atlas basta alterar o URI no ficheiro .env
+
+Caso a ligação seja local criar container do MongoDB:
 ```bash
 docker pull mongo
 docker-compose up -d
@@ -20,7 +22,7 @@ python create_schema.py
 ```
 Popular a base de dados:
 - Executar `InsertDataMongoDB.py`
-- Validar e ajustar as variáveis no topo do script antes de correr.
+
 ## MySQL Local
 Instalar:
 - MySQL Server  
