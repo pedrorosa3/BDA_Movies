@@ -147,6 +147,11 @@ def create_mysql_indexes():
         # por book_rating (cobre a query de média de rating).
         ("idx_ratings_isbn_rating",
          "CREATE INDEX idx_ratings_isbn_rating ON ratings (ISBN, book_rating)"),
+        
+        # Índice composto para acelerar o self-join (Query 3).
+        ("idx_books_author_isbn",
+         "CREATE INDEX idx_books_author_isbn "
+         "ON books (book_author(100), ISBN)"),
     ]
 
     conn = get_sql_connection()
@@ -564,8 +569,8 @@ def main():
     print("====================================================")
 
     
-    n_runs = 4
-
+    n_runs = 1
+    
     base_sql_top10, t1 = medir_tempo(
         ScriptGoal2_Integrated.sql_top10_livros_por_rating,
         n_runs=n_runs,
@@ -601,10 +606,7 @@ def main():
         10, n_runs=n_runs,
         label="Híbrido ORIGINAL → Livros populares + users Mongo"
     )
-
-    print("\nExemplo de resultados da query SQL ORIGINAL (Top 10 por rating):")
-    pp.pprint(base_sql_top10[:3])
-
+    
     # --------------------------------------------------------
     # Criar índices (pode ser executado apenas uma vez)
     # --------------------------------------------------------
@@ -613,7 +615,7 @@ def main():
     print("====================================================")
     create_mysql_indexes()
     create_mongo_indexes()
-
+    
     # --------------------------------------------------------
     # MEDIÇÃO DEPOIS (OTIMIZADO + ÍNDICES)
     # --------------------------------------------------------
@@ -678,6 +680,6 @@ def main():
         ganho = ((tb - to) / tb) * 100 if tb and to else 0.0
         print(f"{nome:26s}  ANTES={tb:.4f}  DEPOIS={to:.4f}  SPEED UP≈{ganho:.4f}")
 
-
+    
 if __name__ == "__main__":
     main()
