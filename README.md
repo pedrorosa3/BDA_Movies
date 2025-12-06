@@ -36,4 +36,4 @@ Executar scripts na seguinte ordem:
 1. `InsertDataMongo.py` – popula as tabelas Mongo com os CSV.
 2. `ScriptGoal2_Integrated.py` – Faz as querys para SQL e Mongo.
 3. `ScriptGoal3.py` – Faz testes de concorrência em SQL e em Mongo.
-3. `goal4.py` – Otimiza as bases de dados e as querys através de indexs.
+3. `ScriptGoal4.py` – Otimiza as bases de dados e as querys através de indexs.
