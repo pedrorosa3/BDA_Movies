@@ -1,7 +1,13 @@
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
 from dotenv import load_dotenv
 import os
 
-# Carregar variáveis do .env
 load_dotenv()
 
 class Config:
@@ -31,6 +37,8 @@ class Config:
     MONGO_DB = os.getenv("MONGO_DB")
     
     LIMITED = os.getenv("LIMITED")
+    
+    N_RUNS = os.getenv("N_RUNS")
 
     # Função auxiliar: construir URI caso não exista
     @staticmethod

@@ -1,16 +1,13 @@
-# ============================================================
-#   Explain_ComparacaoQueryAQuery.py
-#   Compara cada query do Goal 2 com a sua versão do Goal 4
-# ============================================================
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
 
 import mysql.connector
 from config import Config
-from ScriptGoal4 import drop_all_mysql_indexes, create_mysql_indexes
-
-# IMPORTA AS QUERIES ORIGINAIS E OTIMIZADAS
-import ScriptGoal2_Integrated as G2
-import ScriptGoal4 as G4
-
 
 # ============================================================
 # Ligação ao MySQL
@@ -25,7 +22,7 @@ def get_sql_connection():
 
 
 # ============================================================
-# Função utilitária para executar EXPLAIN
+# Função EXPLAIN
 # ============================================================
 def explain(query, params=None, label="EXPLAIN"):
     conn = get_sql_connection()
@@ -60,7 +57,7 @@ def explain(query, params=None, label="EXPLAIN"):
 
 
 # ============================================================
-# Queries SQL do GOAL 2 (texto)
+# Queries SQL do GOAL 2 
 # ============================================================
 Q2_QUERY1 = """
 SELECT
@@ -104,7 +101,7 @@ LIMIT %s;
 """
 
 # ============================================================
-# Queries SQL do GOAL 4 (texto)
+# Queries SQL do GOAL 4 
 # ============================================================
 Q4_QUERY1 = """
 SELECT b.ISBN, b.book_title,

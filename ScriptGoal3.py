@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
 """
 concurrency_demos_project.py
 

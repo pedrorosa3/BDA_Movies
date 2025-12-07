@@ -1,3 +1,10 @@
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
 import mysql.connector
 import pandas as pd
 from config import Config

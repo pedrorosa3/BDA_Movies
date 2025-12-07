@@ -1,12 +1,16 @@
 """
-Script de Análises Híbridas (MySQL + MongoDB)
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+
+Script Queries GOAL 2 (MySQL + MongoDB)
 ------------------------------------------------
 Inclui:
   • 3 queries SQL
   • 2 queries MongoDB
   • 2 queries híbridas (reutilizam as anteriores)
-  • Self-Join real (b1 JOIN b2)
-  • Código robusto, limpo e totalmente comentado em português
 """
 
 import mysql.connector

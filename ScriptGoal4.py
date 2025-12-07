@@ -1,3 +1,11 @@
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
+
 import time
 import pprint
 import sys
@@ -162,7 +170,7 @@ def create_mysql_indexes():
     try:
         for idx_name, stmt in index_statements:
             try:
-                print(f"  - Criando índice {idx_name} ...")
+                print(f"  -  índice {idx_name} ...")
                 cur.execute(stmt)
             except MySQLError as e:
                 # 1061 = Duplicate key name
@@ -394,8 +402,9 @@ def mongo_top_localizacoes_otimizado(limit=10) -> List[Dict[str, Any]]:
     """
     Mongo OTIMIZADO — Top localizações com mais utilizadores.
 
-    Continua equivalente, mas:
+    Alterações:
       - Passa a usar índices em users.location e (location, user_id).
+      - Substituição de $ne por $exists
     """
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
@@ -403,24 +412,16 @@ def mongo_top_localizacoes_otimizado(limit=10) -> List[Dict[str, Any]]:
     pipeline = [
     # permitir uso de índice → "$exists" é index-friendly
     { "$match": { "location": { "$exists": True } } },
-
     # usa IXSCAN no índice (location: 1)
     { "$sort": { "location": 1 } },
-
-    
     {
         "$group": {
             "_id": "$location",
             "num_users": { "$sum": 1 }
         }
     },
-
-    
-    { "$sort": { "num_users": -1 } },
-
-    
+    { "$sort": { "num_users": -1 } },    
     { "$limit": 10 },
-
     {
         "$project": {
             "_id": 0,
@@ -607,7 +608,7 @@ def main():
     print("====================================================")
 
     
-    n_runs = 1
+    n_runs = int(Config.N_RUNS)
     
     base_sql_top10, t1 = medir_tempo(
         ScriptGoal2_Integrated.sql_top10_livros_por_rating,
@@ -696,9 +697,6 @@ def main():
         10, n_runs=n_runs,
         label="Híbrido OTIMIZADO → Livros populares + users Mongo"
     )
-
-    print("\nExemplo de resultados da query SQL OTIMIZADA (Top 10 por rating):")
-    pp.pprint(opt_sql_top10[:3])
 
    
     print("\n====================================================")

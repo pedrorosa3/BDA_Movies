@@ -1,10 +1,18 @@
+"""
+Grupo 11
+Diogo Sousa - 60250; 
+Francisco Lopes - 60252;  
+Guilherme Almeida - 60264;
+Pedro Rosa  - 60294
+"""
+
 from pymongo import MongoClient
 import pandas as pd
 from collections import defaultdict
 from config import Config
 
 # =====================================================================
-# CONEXÃO AO MONGO
+# LIGAÇÃO AO MONGO
 # =====================================================================
 client = MongoClient(Config.build_mongo_uri())
 db = client[Config.MONGO_DB]
