@@ -354,20 +354,35 @@ def mongo_top_users_otimizado(limit=10) -> List[Dict[str, Any]]:
     """
     Mongo OTIMIZADO — Top users por nº de ratings.
 
-    A pipeline é equivalente à original, mas:
-      - Agora beneficia do índice multikey em ratings.user_id,
-        acelerando o $unwind + $group.
+    Alteração na pipeline de forma a ser mais seletiva
+    
     """
     client = get_mongo_client()
     db = client[Config.MONGO_DB]
 
     pipeline = [
-        {"$unwind": "$ratings"},
-        {"$group": {"_id": "$ratings.user_id", "total": {"$sum": 1}}},
-        {"$sort": {"total": -1}},
-        {"$limit": limit},
-        {"$project": {"user_id": "$_id", "total": 1, "_id": 0}},
-    ]
+    {
+        "$project": {
+            "ratings": "$ratings.user_id"   # extrai só o user_id, reduz estrutura
+        }
+    },
+    { "$unwind": "$ratings" },
+    {
+        "$group": {
+            "_id": "$ratings",
+            "total": { "$sum": 1 }
+        }
+    },
+    { "$sort": { "total": -1 } },
+    { "$limit": 10 },
+    {
+        "$project": {
+            "user_id": "$_id",
+            "total": 1,
+            "_id": 0
+        }
+    }
+]
 
     try:
         return list(db.book_ratings.aggregate(pipeline))
@@ -386,12 +401,35 @@ def mongo_top_localizacoes_otimizado(limit=10) -> List[Dict[str, Any]]:
     db = client[Config.MONGO_DB]
 
     pipeline = [
-        {"$match": {"location": {"$ne": None}}},
-        {"$group": {"_id": "$location", "num_users": {"$sum": 1}}},
-        {"$sort": {"num_users": -1}},
-        {"$limit": limit},
-        {"$project": {"location": "$_id", "num_users": 1, "_id": 0}}
-    ]
+    # permitir uso de índice → "$exists" é index-friendly
+    { "$match": { "location": { "$exists": True } } },
+
+    # usa IXSCAN no índice (location: 1)
+    { "$sort": { "location": 1 } },
+
+    
+    {
+        "$group": {
+            "_id": "$location",
+            "num_users": { "$sum": 1 }
+        }
+    },
+
+    
+    { "$sort": { "num_users": -1 } },
+
+    
+    { "$limit": 10 },
+
+    {
+        "$project": {
+            "_id": 0,
+            "location": "$_id",
+            "num_users": 1
+        }
+    }
+]
+
 
     try:
         return list(db.users.aggregate(pipeline))
