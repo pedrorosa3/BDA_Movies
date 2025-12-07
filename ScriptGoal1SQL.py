@@ -16,7 +16,7 @@ from config import Config
 DDL = [
 
     "DROP DATABASE IF EXISTS bda_Group11",  
-    # Apaga a BD antiga (se existir) → evita conflitos com dados ou esquemas antigos.
+    # Apaga a BD antiga (se existir)
 
     """
     CREATE DATABASE IF NOT EXISTS bda_Group11
@@ -28,8 +28,8 @@ DDL = [
     # Seleciona a BD recém-criada para criar as tabelas seguintes.
 
     # ----------------------------------------------------------
-    # Tabela BOOKS — réplica fiel do CSV original.
-    # ISBN é PRIMARY KEY pois identifica unicamente cada livro.
+    # Tabela BOOKS
+    # ISBN - PRIMARY KEY
     # ----------------------------------------------------------
     """
     CREATE TABLE IF NOT EXISTS books (

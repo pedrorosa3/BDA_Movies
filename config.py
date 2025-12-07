@@ -20,11 +20,11 @@ class Config:
     MYSQL_DB = os.getenv("MYSQL_DB")
 
     # ---------------------------
-    # MongoDB (URI completa)
+    # MongoDB (URI)
     # ---------------------------
     MONGO_URI = os.getenv("MONGO_URI")
 
-    # Base de dados (usada por MySQL & MongoBD)
+    #  Nome da Base de dados (usada por MySQL & MongoBD)
     DB_NAME = os.getenv("DB_NAME")
 
     # ---------------------------

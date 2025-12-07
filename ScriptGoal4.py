@@ -62,14 +62,13 @@ def drop_all_mysql_indexes():
     print("\n[MySQL] Removendo TODOS os índices (exceto PK, FK, UNIQUE)...")
 
     try:
-        # Obtém todas as tabelas da BD
         cur.execute("SHOW TABLES")
         tabelas = [list(row.values())[0] for row in cur.fetchall()]
 
         for tabela in tabelas:
             print(f"\n  > Tabela: {tabela}")
 
-            # Lista detalhada dos índices
+            
             cur.execute(f"SHOW INDEX FROM {tabela}")
             idxs = cur.fetchall()
 

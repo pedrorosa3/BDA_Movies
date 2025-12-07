@@ -36,7 +36,6 @@ def explain(query, params=None, label="EXPLAIN"):
         cur.execute("EXPLAIN " + query, params or ())
         rows = cur.fetchall()
 
-        # Cabeçalho formatado
         print(f"{'table':<15} {'type':<12} {'rows':<10} {'key':<30} {'Extra'}")
         print("-" * 100)
 

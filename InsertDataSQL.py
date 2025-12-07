@@ -62,17 +62,16 @@ def main():
     cur.execute("DELETE FROM books;")
     conn.commit()
 
-    # Query preparada para inserção
     insert_books = """
         INSERT INTO books
         (ISBN, book_title, book_author, year_of_publication, publisher,
          image_url_s, image_url_m, image_url_l)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
     """
-
-    batch_size = 2000   # inserir em blocos para grande performance
-    buffer = []         # lista temporária
-    total = 0           # contador de registos inseridos
+    # Tamanho dos blocos
+    batch_size = 2000   
+    buffer = []         
+    total = 0           
 
     # ------------------------------------------------------------
     # Inserção em batches
@@ -125,7 +124,6 @@ def main():
     cur.execute("DELETE FROM ratings;")
     conn.commit()
 
-    # Query preparada
     insert_ratings = """
         INSERT IGNORE INTO ratings (user_id, ISBN, book_rating)
         VALUES (%s,%s,%s)
