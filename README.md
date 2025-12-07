@@ -4,7 +4,7 @@ Francisco Lopes nº60252
 Guilherme Almeida nº60264
 Pedro Rosa nº60294
 
-1. É de frisar que todos os pontos do enunciado foram realizados neste projeto.
+- É de frisar que todos os pontos do enunciado foram realizados neste projeto.
 
 ## MongoDB Atlas
 Pré‑requisitos:
