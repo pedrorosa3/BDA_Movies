@@ -3,14 +3,21 @@ Diogo Sousa nº60250
 Francisco Lopes nº60252
 Guilherme Almeida nº60264
 Pedro Rosa nº60294
-## MongoDB Local
+
+## MongoDB Atlas
 Pré‑requisitos:
 ```bash
 py -m pip install mysql-connector-python pymongo pandas dotenv
 ```
 Caso a ligação seja feita via Atlas basta alterar o URI no ficheiro .env
 
-Caso a ligação seja local criar container do MongoDB:
+## MongoDB Local
+Pré‑requisitos:
+```bash
+py -m pip install mysql-connector-python pymongo pandas dotenv
+```
+
+Criar container do MongoDB:
 ```bash
 docker pull mongo
 docker-compose up -d
@@ -34,6 +41,6 @@ Executar scripts na seguinte ordem:
 2. `InsertDataSQL.py` – popula as tabelas SQL com os CSV.
 1. `create_schema.py` – cria a base de dados e tabelas Mongo.
 1. `InsertDataMongo.py` – popula as tabelas Mongo com os CSV.
-2. `ScriptGoal2_Integrated.py` – Faz as querys para SQL e Mongo.
+2. `ScriptGoal2_Integrated.py` – Faz as queries para SQL e Mongo.
 3. `ScriptGoal3.py` – Faz testes de concorrência em SQL e em Mongo.
 3. `ScriptGoal4.py` – Otimiza as bases de dados e as querys através de indexs.
