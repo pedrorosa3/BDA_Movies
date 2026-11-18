@@ -48,20 +48,24 @@ except Exception as e:
 try:
     from config import Config  # deve expor MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB, build_mongo_uri(), MONGO_DB
 except Exception:
-    # Fallback com informações de exemplo — ajusta conforme necessário
+    # Fallback: lê as credenciais das variáveis de ambiente (nunca hardcoded)
+    import os
+
     class Config:
-        MYSQL_HOST = "localhost"
-        MYSQL_USER = "root"
-        MYSQL_PASSWORD = "<password>"
-        MYSQL_DB = "bda_Group11"
+        MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+        MYSQL_USER = os.getenv("MYSQL_USER", "root")
+        MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+        MYSQL_DB = os.getenv("MYSQL_DB", "bda_Group11")
         MYSQL_PORT = 3306
-        MONGO_HOST = "localhost"
-        MONGO_PORT = 27017
-        MONGO_DB = "bda_Group11"
+        MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
+        MONGO_PORT = os.getenv("MONGO_PORT", "27017")
+        MONGO_DB = os.getenv("MONGO_DB", "bda_Group11")
 
         @staticmethod
         def build_mongo_uri():
-            return f"mongodb://root:<password>@{Config.MONGO_HOST}:{Config.MONGO_PORT}/"
+            user = os.getenv("MONGO_USER", "root")
+            password = os.getenv("MONGO_PASS", "")
+            return f"mongodb://{user}:{password}@{Config.MONGO_HOST}:{Config.MONGO_PORT}/"
 
 
 pp = pprint.PrettyPrinter(indent=2)
