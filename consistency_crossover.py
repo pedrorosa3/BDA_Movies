@@ -62,9 +62,13 @@ def main():
             "book_rating": r["book_rating"]
         })
 
-    for doc in cache.values():
-        db.book_ratings.insert_one(doc)
-    print("Consistência confirmada.")
+    # Inserção em lotes: uma ida ao servidor por cada 2000 documentos
+    # (insert_one fazia uma por documento — muito lento, sobretudo no Atlas)
+    docs = list(cache.values())
+    batch_size = 2000
+    for i in range(0, len(docs), batch_size):
+        db.book_ratings.insert_many(docs[i:i + batch_size], ordered=False)
+    print(f"Consistência confirmada ({len(docs):,} documentos book_ratings).")
 
     
 

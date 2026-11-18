@@ -116,7 +116,7 @@ MONGO_HOST=localhost
 MONGO_PORT=27017
 DB_NAME=bda_Group11
 
-LIMITED=True   # True = inserção parcial (20 000 registos) | False = dataset completo
+LIMITED=True   # True = carrega só 20 000 linhas de cada CSV no MongoDB | False = dataset completo
 N_RUNS=1       # Nº de execuções de cada query no benchmark do ScriptGoal4.py
 ```
 
@@ -159,6 +159,8 @@ Confirma que as credenciais do MySQL no `.env` estão corretas.
 | 6 | `python ScriptGoal3.py` | Executa os testes de concorrência em MySQL e MongoDB |
 | 7 | `python ScriptGoal4.py` | Cria índices e compara tempos das queries antes/depois |
 | 8 | `python ExplainsGoal4.py` | Mostra os planos de execução (`EXPLAIN`) das queries |
+
+> ⏱️ **Tempos de referência** (MySQL local + MongoDB Atlas, `LIMITED=True`): o passo 2 demora ~5 min (insere sempre o dataset completo, ~1,15 M ratings) e o passo 4 ~7 min (no fim reconstrói `book_ratings` a partir do MySQL para garantir consistência). Os restantes passos demoram entre segundos e ~2 min. Com o MongoDB local (Docker) o passo 4 é mais rápido.
 
 > ⚠️ Os passos **1 a 4** têm de ser executados antes dos restantes, por esta ordem. Os scripts `ScriptGoal1SQL.py` e `create_schema.py` **apagam** os dados existentes antes de recriar a estrutura.
 
