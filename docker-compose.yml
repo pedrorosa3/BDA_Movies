@@ -7,8 +7,9 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: <password>
+      # Credenciais lidas do ficheiro .env (ver .env.example)
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:?Definir MONGO_USER no .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:?Definir MONGO_PASS no .env}
     volumes:
       - mongo_data:/data/db
 
